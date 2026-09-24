@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  مانیفست اپلیکیشن «ضبط تماس شخصی»
+
+  اصل راهنما: کمینه‌سازی مجوزها. هر مجوز در README با دلیل مستند شده است.
+  هیچ مجوزی برای اینترنت، دسترسی به مخاطبین، پیامک‌ها یا موقعیت مکانی وجود ندارد.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- سخت‌افزار میکروفون برای ضبط لازم است (ضبط تماس بدون صدا بی‌معناست) -->
+    <uses-feature
+        android:name="android.hardware.microphone"
+        android:required="true" />
+
+    <!-- مجوزهای زمان نصب (normal) -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"
+        tools:ignore="QueryAllPackagesPermission" />
+
+    <!-- مجوزهای زمان اجرا (runtime) -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+
+    <!-- عمداً موجود نیستند: INTERNET، WRITE_EXTERNAL_STORAGE،
+         READ_CONTACTS، PROCESS_OUTGOING_CALLS، RECEIVE_BOOT_COMPLETED -->
+
+    <application
+        android:allowBackup="false"
+        android:icon="@drawable/ic_launcher"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.CallRecorder"
+        tools:targetApi="34">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- سرویس ضبط: فقط از داخل خود اپ یا از رویداد دسترسی‌پذیری (پیش‌نمایش
+             اعلان) اجرا می‌شود و همیشه یک اعلان دائمی نمایش می‌دهد. -->
+        <service
+            android:name=".service.RecordingService"
+            android:exported="false"
+            android:foregroundServiceType="microphone" />
+
+        <!-- گیرنده‌ی وضعیت تماس؛ برای OUTGOING_CALL از TelephonyCallback استفاده
+             می‌کنیم (برادکست NEW_OUTGOING_CALL از API 28 برای اپ‌های عادی مسدود است). -->
+        <receiver
+            android:name=".service.CallStateReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.PHONE_STATE" />
+            </intent-filter>
+        </receiver>
+
+        <!-- سرویس دسترسی‌پذیری: تشخیص صفحه‌ی تماس MIUI و روشن‌کردن اسپیکرفون.
+             فقط سیستم می‌تواند به آن متصل شود (BIND_ACCESSIBILITY_SERVICE). -->
+        <service
+            android:name=".accessibility.CallAccessibilityService"
+            android:exported="true"
+            android:label="@string/acc_service_label"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/accessibility_service_config" />
+        </service>
+    </application>
+</manifest>

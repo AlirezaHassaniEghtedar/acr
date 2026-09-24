@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ضبط تماس شخصی</string>
+
+    <!-- سرویس دسترسی‌پذیری -->
+    <string name="acc_service_label">تشخیص تماس (ضبط تماس شخصی)</string>
+    <string name="acc_service_description">این سرویس فقط برای تشخیص بازشدن صفحه‌ی تماس سیستم و روشن‌کردن خودکار بلندگو هنگام ضبط استفاده می‌شود. هیچ محتوایی از صفحه خوانده یا ذخیره نمی‌شود و هیچ داده‌ای به بیرون از دستگاه ارسال نمی‌شود.</string>
+
+    <!-- اعلان -->
+    <string name="notif_channel_name">ضبط تماس</string>
+    <string name="notif_channel_desc">اعلان ضبط فعال تماس تلفنی</string>
+    <string name="notif_recording_title">در حال ضبط تماس…</string>
+    <string name="notif_recording_text">ضبط از میکروفون فعال است. برای پایان دادن لمس کنید.</string>
+    <string name="notif_stop_action">توقف</string>
+
+    <!-- وضعیت اصلی -->
+    <string name="status_ready">آماده — هنوز تنظیم نشده</string>
+    <string name="status_ok">همه‌چیز تنظیم است؛ تماس‌ها به‌صورت خودکار ضبط می‌شوند</string>
+    <string name="status_partial">تنظیمات ناقص است — موارد زیر را کامل کنید</string>
+    <string name="status_recording_now">در حال ضبط…</string>
+
+    <string name="card_status_title">وضعیت</string>
+    <string name="card_settings_title">تنظیمات</string>
+    <string name="card_recordings_title">فایل‌های ضبط‌شده</string>
+
+    <!-- دکمه‌ها -->
+    <string name="btn_probe">آزمایش ضبط مستقیم مکالمه (VOICE_CALL)</string>
+    <string name="btn_probe_running">در حال آزمایش…</string>
+    <string name="btn_permissions">۱) اعطای مجوزها</string>
+    <string name="btn_accessibility">۲) فعال‌سازی سرویس دسترسی‌پذیری</string>
+    <string name="btn_overlay">۳) مجوز نمایش روی برنامه‌ها</string>
+    <string name="btn_miui">تنظیمات MIUI (Autostart و Battery)</string>
+    <string name="btn_test_record">ضبط آزمایشی ۱۰ ثانیه‌ای</string>
+    <string name="btn_open_folder">مشاهده‌ی فایل‌ها</string>
+    <string name="btn_refresh">بازخوانی لیست</string>
+
+    <!-- کلیدها -->
+    <string name="sw_call_recording">ضبط خودکار تماس‌ها</string>
+    <string name="sw_speaker">روشن‌کردن خودکار بلندگو هنگام تماس</string>
+    <string name="sw_encrypt">رمزنگاری فایل‌های ضبط‌شده (AES-256)</string>
+
+    <!-- سؤال‌های تشخیصی -->
+    <string name="probe_question">آیا هنگام مکالمه، صدای طرف مقابل از بلندگو شنیده می‌شود؟</string>
+    <string name="probe_yes">بله، از بلندگو پخش می‌شود</string>
+    <string name="probe_no">خیر، فقط از گوشی شنیده می‌شود</string>
+    <string name="probe_result_direct_ok">نتایج آزمایش: ضبط مستقیم VOICE_CALL ممکن است — از حالت مستقیم استفاده شد. ✅</string>
+    <string name="probe_result_direct_no">نتایج آزمایش: ضبط مستقیم مسدود است (مطابق انتظار در اندروید ۹+). حالت جایگزین (اسپیکر + میکروفون) فعال شد. 🎙</string>
+
+    <!-- ذخیره‌سازی -->
+    <string name="storage_summary">محل ذخیره‌سازی: Music/CallRecordings (قابل مشاهده در همه‌ی فایل‌منیجرها)</string>
+    <string name="rec_empty">هنوز فایلی ضبط نشده است.</string>
+    <string name="rec_delete">حذف</string>
+
+    <!-- خطاها -->
+    <string name="err_mic_permission">مجوز میکروفون داده نشده است.</string>
+    <string name="err_mic_busy">میکروفون در دسترس نیست (شاید برنامه‌ی دیگری آن را نگه داشته).</string>
+    <string name="err_no_storage">ذخیره‌سازی در دسترس نیست.</string>
+    <string name="err_fgs_denied">اجازه‌ی شروع سرویس ضبط داده نشد. یک‌بار اپ را از لیست اخیر ببندید و دوباره باز کنید؛ در تنظیمات باتری MIUI هم آن را «بدون محدودیت» کنید.</string>
+    <string name="toast_test_started">ضبط آزمایشی شروع شد؛ ۱۰ ثانیه صحبت کنید…</string>
+    <string name="toast_test_done">ضبط آزمایشی تمام شد.</string>
+    <string name="toast_enc_on">رمزنگاری فعال شد — فایل‌های جدید با AES-256 ذخیره می‌شوند.</string>
+    <string name="toast_enc_off">رمزنگاری غیرفعال شد — فایل‌های جدید با فرمت m4a ذخیره می‌شوند. فایل‌های رمزنگاری‌شده‌ی قبلی همچنان با کلید فعلی قابل پخش‌اند.</string>
+</resources>
