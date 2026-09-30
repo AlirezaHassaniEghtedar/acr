@@ -4,6 +4,9 @@
 
   اصل راهنما: کمینه‌سازی مجوزها. هر مجوز در README با دلیل مستند شده است.
   هیچ مجوزی برای اینترنت، دسترسی به مخاطبین، پیامک‌ها یا موقعیت مکانی وجود ندارد.
+
+  به‌جای QUERY_ALL_PACKAGES از <queries> با فهرست محدود استفاده می‌کنیم؛
+  کد ما فقط نام پکیجِ صفحه‌ی فعال را با این فهرست مقایسه می‌کند.
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
@@ -18,8 +21,6 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
-    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"
-        tools:ignore="QueryAllPackagesPermission" />
 
     <!-- مجوزهای زمان اجرا (runtime) -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
@@ -28,8 +29,25 @@
     <!-- عمداً موجود نیستند: INTERNET، WRITE_EXTERNAL_STORAGE،
          READ_CONTACTS، PROCESS_OUTGOING_CALLS، RECEIVE_BOOT_COMPLETED -->
 
+    <!-- دید محدود (package visibility) — فقط پکیج‌هایی که کد واقعاً به آن‌ها
+         ارجاع می‌دهد؛ جایگزین QUERY_ALL_PACKAGES با دید عمومی. -->
+    <queries>
+        <!-- صفحه‌ی تماس (AOSP / MIUI / گوگل دیالر) — فقط برای مقایسه‌ی نام
+             پکیج در سرویس دسترسی‌پذیری؛ هیچ تعامل مستقیمی انجام نمی‌شود. -->
+        <package android:name="com.android.incallui" />
+        <package android:name="com.miui.incallui" />
+        <package android:name="com.google.android.dialer" />
+
+        <!-- اپ Security شیائومی برای بازکردن صفحه‌ی Autostart (MiuiHelper) -->
+        <package android:name="com.miui.securitycenter" />
+        <!-- powerkeeper برای صفحه‌ی تنظیمات باتری (MiuiHelper) -->
+        <package android:name="com.miui.powerkeeper" />
+    </queries>
+
     <application
         android:allowBackup="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
@@ -45,15 +63,15 @@
             </intent-filter>
         </activity>
 
-        <!-- سرویس ضبط: فقط از داخل خود اپ یا از رویداد دسترسی‌پذیری (پیش‌نمایش
-             اعلان) اجرا می‌شود و همیشه یک اعلان دائمی نمایش می‌دهد. -->
+        <!-- سرویس ضبط: Foreground Service با نوع microphone. شروع آن از
+             داخل خود اپ یا برادکست PHONE_STATE انجام می‌شود و همیشه یک
+             اعلان دائمی نمایش می‌دهد. -->
         <service
             android:name=".service.RecordingService"
             android:exported="false"
             android:foregroundServiceType="microphone" />
 
-        <!-- گیرنده‌ی وضعیت تماس؛ برای OUTGOING_CALL از TelephonyCallback استفاده
-             می‌کنیم (برادکست NEW_OUTGOING_CALL از API 28 برای اپ‌های عادی مسدود است). -->
+        <!-- گیرنده‌ی وضعیت تماس: شروع/پایان خودکار ضبط با OFFHOOK/IDLE. -->
         <receiver
             android:name=".service.CallStateReceiver"
             android:exported="true">

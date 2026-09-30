@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  قواعد پشتیبان‌گیری ابری برای اندروید ۱۱ و پایین‌تر (allowBackup=false هم هست
+  ولی این فایل صراحت را کامل می‌کند): هیچ داده‌ای پشتیبان‌گیری نمی‌شود.
+-->
+<full-backup-content>
+    <exclude domain="sharedpref" path="." />
+    <exclude domain="file" path="." />
+    <exclude domain="database" path="." />
+    <exclude domain="external" path="." />
+</full-backup-content>

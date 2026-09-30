@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  قواعد استخراج داده (اندروید ۱۲ به بعد): cloud backup و انتقال دستگاه‌به‌دستگاه.
+  این اپ «هیچ» داده‌ای برای پشتیبان‌گیری ندارد: تنظیمات محلی است و کلید
+  رمزنگاری در Android Keystore به دستگاه گره خورده و قابل انتقال نیست.
+  پس همه‌چیز صریحاً «ممنوع» است تا رفتار کاملاً قابل پیش‌بینی باشد.
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="sharedpref" path="." />
+        <exclude domain="file" path="." />
+        <exclude domain="database" path="." />
+        <exclude domain="external" path="." />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="sharedpref" path="." />
+        <exclude domain="file" path="." />
+        <exclude domain="database" path="." />
+        <exclude domain="external" path="." />
+    </device-transfer>
+</data-extraction-rules>
