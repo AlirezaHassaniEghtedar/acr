@@ -1,9 +1,32 @@
+# Gradle
 .gradle/
 build/
 app/build/
+
+# IDE
+.idea/
+*.iml
+
+# Android build outputs & artifacts
+*.apk
+*.aab
+*.idsig
 local.properties
-_build_tools/
-studio.html
+
+# Kotlin/Native & tool caches
+.kotlin/
+
+# Freebuff
+.freebuff/
+
+# Archives (never commit binaries/archives)
+*.zip
+
+# Signing material — NEVER commit
 keystore.properties
 *.jks
 *.keystore
+
+# Local toolchain installed by docs/BUILD.md (JDK/Gradle/SDK)
+_build_tools/
+studio.html
