@@ -130,7 +130,7 @@ app/src/main/java/ir/personal/callrecorder/
 ./gradlew assembleRelease   # خروجی: app/build/outputs/apk/release/app-release-unsigned.apk
 ```
 
-در این مخزن، مسیر SDK در `local.properties` به پوشه‌ی محلی `_build_tools/sdk` اشاره می‌کند؛ اگر SDK خودتان را دارید فقط همان فایل را عوض کنید.
+در این مخزن، مسیر SDK در `local.properties` به پوشه‌ی محلی `_build_tools/android-sdk` اشاره می‌کند؛ اگر SDK خودتان را دارید فقط همان فایل را عوض کنید.
 
 ## ۸) امضا با کلید شخصی
 
