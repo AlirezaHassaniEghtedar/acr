@@ -1,13 +1,14 @@
 import java.util.Properties
 
 plugins {
-    id("com.android.application")
-    id("org.jetbrains.kotlin.android")
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
 }
 
 // اگر فایل keystore.properties در ریشه پروژه موجود باشد، خروجی release
 // به‌صورت خودکار با آن کلید امضا می‌شود. در غیر این صورت release
-// بدون امضا ساخته می‌شود و می‌توانید با apksigner امضا کنید (README).
+// بدون امضا ساخته می‌شود و بیلد هرگز به‌خاطر نبود کلید شکست نمی‌خورد.
+// این فایل و خود keystore هرگز نباید commit شوند (.gitignore پوشش می‌دهد).
 val keystorePropsFile = rootProject.file("keystore.properties")
 val keystoreProps = Properties().apply {
     if (keystorePropsFile.exists()) keystorePropsFile.inputStream().use { load(it) }
@@ -21,8 +22,10 @@ android {
         applicationId = "ir.personal.callrecorder"
         minSdk = 26        // اندروید ۸٫۰
         targetSdk = 35     // اندروید ۱۵
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 2
+        versionName = "1.0.1"
+
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     if (keystorePropsFile.exists()) {
@@ -61,14 +64,26 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
+
+    lint {
+        // گزارش‌ها به‌صورت متن هم تولید شود تا در CI/ترمینال قابل خواندن باشد.
+        textReport = true
+        abortOnError = true
+    }
+
+    testOptions {
+        unitTests.isReturnDefaultValues = true
+    }
 }
 
-// فقط کتابخانه‌های رسمی AndroidX — بدون هیچ کتابخانه‌ی ثالث
+// فقط کتابخانه‌های رسمی AndroidX/Material — بدون هیچ کتابخانه‌ی ثالث.
+// نسخه‌ها در gradle/libs.versions.toml نگه‌داری می‌شوند.
 dependencies {
-    implementation("androidx.core:core-ktx:1.13.1")
-    implementation("androidx.appcompat:appcompat:1.7.0")
-    implementation("com.google.android.material:material:1.12.0")
-    implementation("androidx.constraintlayout:constraintlayout:2.1.4")
-    implementation("androidx.recyclerview:recyclerview:1.3.2")
-    implementation("androidx.preference:preference-ktx:1.2.1")
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.appcompat)
+    implementation(libs.material)
+    implementation(libs.androidx.constraintlayout)
+    implementation(libs.androidx.recyclerview)
+
+    testImplementation(libs.junit)
 }

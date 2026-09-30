@@ -1,0 +1,24 @@
+# کاتالوگ نسخه‌ها — تنها مرجع وابستگی‌های پروژه.
+# همه‌ی نسخه‌ها «stable» رسمی هستند (بدون alpha/beta/rc).
+[versions]
+agp = "8.6.1"
+kotlin = "2.0.21"
+coreKtx = "1.15.0"
+appcompat = "1.7.1"
+material = "1.13.0"
+constraintlayout = "2.2.1"
+recyclerview = "1.4.0"
+junit = "4.13.2"
+
+[libraries]
+androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+material = { group = "com.google.android.material", name = "material", version.ref = "material" }
+androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
+androidx-recyclerview = { group = "androidx.recyclerview", name = "recyclerview", version.ref = "recyclerview" }
+# فقط برای تست‌های واحد محلی (روی APK نهایی اثری ندارد)
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }

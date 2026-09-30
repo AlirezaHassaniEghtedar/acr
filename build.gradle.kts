@@ -1,6 +1,6 @@
 // فایل build ریشه پروژه
-// پلاگین‌های رسمی گوگل و جت‌برینز — هیچ وابستگی غیررسمی وجود ندارد.
+// پلاگین‌های رسمی گوگل و جت‌برینز — نسخه‌ها در gradle/libs.versions.toml
 plugins {
-    id("com.android.application") version "8.5.2" apply false
-    id("org.jetbrains.kotlin.android") version "2.0.20" apply false
+    alias(libs.plugins.android.application) apply false
+    alias(libs.plugins.kotlin.android) apply false
 }
