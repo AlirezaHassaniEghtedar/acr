@@ -196,7 +196,9 @@ $BT/aapt dump badging PersonalCallRecorder-*.apk | grep -i permission
 
 خروجی امضاشده‌ی این نسخه:
 - `app/build/outputs/apk/release/app-release.apk` (versionCode 2)
-- SHA-256: `dbd4dbcf6475c17a7c985b49016b8e1efd92038a8bb4579f8bd1cd6b79c107eb`
+- SHA-256: `174cf7722dd82bd6f30bcc4b926bfebab640049e4d0266adbcb63a5a322ef530`
+
+نکته: بیلد این پروژه deterministic نیست (timestamp داخل zip)؛ اگر خودتان از همین سورس بیلد بگیرید، چک‌سام متفاوت ولی معتبر خواهد بود — مهم، امضای کلید و مجوزهای APK است نه چک‌سام.
 
 ## ۱۳) محدودیت‌های شناخته‌شده / نقشه‌ی راه
 
