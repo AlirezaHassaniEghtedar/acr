@@ -112,6 +112,26 @@ class MainActivity : AppCompatActivity() {
                 Toast.LENGTH_LONG
             ).show()
         }
+
+        showLegalNoticeOnce()
+    }
+
+    /**
+     * هشدار قانونی/رضایت — فقط یک‌بار در اولین اجرا نمایش داده می‌شود.
+     * کوچک و غیرمزاحم: تأیید صرفاً برای ثبت آگاهی کاربر است و هیچ داده‌ای
+     * ذخیره نمی‌شود جز یک فلگ بولی در تنظیمات محلی.
+     */
+    private fun showLegalNoticeOnce() {
+        if (prefs.legalNoticeAcknowledged) return
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.legal_title)
+            .setMessage(R.string.legal_message)
+            .setPositiveButton(R.string.legal_ack) { d, _ ->
+                prefs.legalNoticeAcknowledged = true
+                d.dismiss()
+            }
+            .setCancelable(false)
+            .show()
     }
 
     override fun onResume() {

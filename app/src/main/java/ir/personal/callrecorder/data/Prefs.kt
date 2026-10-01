@@ -39,11 +39,17 @@ class Prefs(context: Context) {
         get() = sp.getBoolean(KEY_PROBE_DONE, false)
         set(value) = sp.edit().putBoolean(KEY_PROBE_DONE, value).apply()
 
+    /** آیا کاربر هشدار قانونی/رضایت اولیه را یک‌بار دیده و تأیید کرده است؟ */
+    var legalNoticeAcknowledged: Boolean
+        get() = sp.getBoolean(KEY_LEGAL_ACK, false)
+        set(value) = sp.edit().putBoolean(KEY_LEGAL_ACK, value).apply()
+
     companion object {
         private const val KEY_RECORDING = "recording_enabled"
         private const val KEY_SPEAKER = "speaker_enabled"
         private const val KEY_ENCRYPT = "encryption_enabled"
         private const val KEY_DIRECT_OK = "direct_mode_supported"
         private const val KEY_PROBE_DONE = "probe_done"
+        private const val KEY_LEGAL_ACK = "legal_notice_acknowledged"
     }
 }
