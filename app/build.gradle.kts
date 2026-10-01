@@ -35,6 +35,13 @@ android {
                 storePassword = keystoreProps.getProperty("storePassword")
                 keyAlias = keystoreProps.getProperty("keyAlias")
                 keyPassword = keystoreProps.getProperty("keyPassword")
+                // طرح‌های امضا (minSdk 26 یعنی همه‌ی دستگاه‌ها از v2
+                // پشتیبانی می‌کنند؛ v1 JAR-signing لازم نیست):
+                //  • v2 — الزامی و کافی برای اندروید ۸ به بعد
+                //  • v3 — چرخش کلید در آینده (key rotation) را ممکن می‌کند
+                enableV1Signing = false
+                enableV2Signing = true
+                enableV3Signing = true
             }
         }
     }
