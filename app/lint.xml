@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  سیاست لینت این پروژه:
+
+  • GradleDependency / AndroidGradlePluginVersion خاموش شده‌اند چون
+    نسخه‌ها «عمداً» در gradle/libs.versions.toml پین می‌شوند: فقط نسخه‌های
+    stable و فقط با آپدیت دستی + ثبت در CHANGELOG. بررسی «نسخه‌ی جدیدتر
+    هست؟» بخشی از فرایند نگهداری دستی است، نه خطای بیلد.
+  • بقیه‌ی چک‌های لینت فعال‌اند و هدف ما صفر خطا و صفر هشدار از کد
+    خود پروژه است.
+-->
+<lint>
+    <issue id="GradleDependency" severity="ignore" />
+    <issue id="AndroidGradlePluginVersion" severity="ignore" />
+</lint>

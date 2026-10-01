@@ -2,7 +2,9 @@ package ir.personal.callrecorder.accessibility
 
 import android.accessibilityservice.AccessibilityService
 import android.content.Context
+import android.media.AudioDeviceInfo
 import android.media.AudioManager
+import android.os.Build
 import android.view.accessibility.AccessibilityEvent
 import ir.personal.callrecorder.data.Prefs
 
@@ -13,7 +15,7 @@ import ir.personal.callrecorder.data.Prefs
  * وضعیت قبلی بلندگو را برمی‌گرداند.
  *
  * این سرویس:
- *  • هیچ محتوای متنی از صفحه نمی‌خواند و ذخیره نمی‌کند؛
+ *  • هیچ محتوایی از پنجره نمی‌خواند و ذخیره نمی‌کند (canRetrieveWindowContent=false)؛
  *  • فقط به نام پکیج صفحه‌ی فعال نگاه می‌کند (com.android.incallui و مشابه)؛
  *  • هیچ داده‌ای را به جایی نمی‌فرستد.
  *
@@ -36,16 +38,12 @@ class CallAccessibilityService : AccessibilityService() {
 
         if (isCallUi && prefs.speakerEnabled && !inCallSession) {
             inCallSession = true
-            val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
-            speakerWasOnBeforeCall = audioManager.isSpeakerphoneOn
-            if (!speakerWasOnBeforeCall) {
-                audioManager.isSpeakerphoneOn = true
-            }
+            speakerWasOnBeforeCall = isSpeakerphoneOn()
+            if (!speakerWasOnBeforeCall) setSpeakerphoneOn(true)
         } else if (!isCallUi && inCallSession) {
             // صفحه‌ی تماس بسته شد → بازگردانی وضعیت بلندگو
             inCallSession = false
-            val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
-            audioManager.isSpeakerphoneOn = speakerWasOnBeforeCall
+            setSpeakerphoneOn(speakerWasOnBeforeCall)
         }
     }
 
@@ -55,10 +53,44 @@ class CallAccessibilityService : AccessibilityService() {
         // اگر کاربر سرویس را خاموش کرد، بلندگو را در وضعیت طبیعی بگذاریم.
         if (inCallSession) {
             inCallSession = false
-            val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
-            audioManager.isSpeakerphoneOn = speakerWasOnBeforeCall
+            setSpeakerphoneOn(speakerWasOnBeforeCall)
         }
         return super.onUnbind(intent)
+    }
+
+    /**
+     * روشن/خاموش‌کردن بلندگو بدون هشدار deprecation:
+     *  • اندروید ۱۲ به بعد: مسیر رسمی جدید یعنی setCommunicationDevice
+     *    با دستگاه SPEAKERPHONE است؛
+     *  • اندروید ۸ تا ۱۱: همان متد قدیمی isSpeakerphoneOn که در آن
+     *     نسخه‌ها هنوز معتبر است (فقط برای این شاخه از @Suppress
+     *     استفاده می‌کنیم چون جایگزین قدیمی‌تر از minSdk وجود ندارد).
+     */
+    private fun setSpeakerphoneOn(on: Boolean) {
+        val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (on) {
+                val speaker = audioManager.availableCommunicationDevices.firstOrNull {
+                    it.type == AudioDeviceInfo.TYPE_BUILTIN_SPEAKER
+                } ?: return
+                audioManager.setCommunicationDevice(speaker)
+            } else {
+                audioManager.clearCommunicationDevice()
+            }
+        } else {
+            @Suppress("DEPRECATION")
+            audioManager.isSpeakerphoneOn = on
+        }
+    }
+
+    private fun isSpeakerphoneOn(): Boolean {
+        val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            audioManager.communicationDevice?.type == AudioDeviceInfo.TYPE_BUILTIN_SPEAKER
+        } else {
+            @Suppress("DEPRECATION")
+            audioManager.isSpeakerphoneOn
+        }
     }
 
     companion object {

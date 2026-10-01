@@ -225,8 +225,7 @@ class MainActivity : AppCompatActivity() {
      */
     private fun probeVoiceCallSupported(): Boolean {
         val tm = getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
-        @Suppress("DEPRECATION")
-        val state = tm.callState
+        val state = currentCallState(tm)
         if (state != TelephonyManager.CALL_STATE_OFFHOOK) return false
 
         val file = File(cacheDir, "probe.tmp")
@@ -251,6 +250,17 @@ class MainActivity : AppCompatActivity() {
         }
         return ok
     }
+
+    /**
+     * وضعیت تماس: در API 31 به بعد از TelephonyManager.callStateForSubscription
+     * استفاده نمی‌کنیم (نیاز به READ_PHONE_STATE محدودتر دارد و رفتار
+     * سیم‌کوت‌محور دارد)؛ مسیر ساده و پایدار گوش دادن به حالت فعلی است:
+     * تا API 30 متد قدیمی callState معتبر است، از 31 به بعد با فراخوانی
+     * متدِ هم‌نامِ deprecate‌شده رفتار یکسان دارد (اگر مجوز داشته باشیم).
+     * @Suppress فقط برای همین مورد است؛ جایگزین ساده‌تری وجود ندارد.
+     */
+    @Suppress("DEPRECATION")
+    private fun currentCallState(tm: TelephonyManager): Int = tm.callState
 
     // ---------- لیست فایل‌ها ----------
 

@@ -14,6 +14,7 @@ import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
+import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
@@ -22,6 +23,7 @@ import ir.personal.callrecorder.R
 import ir.personal.callrecorder.data.Prefs
 import ir.personal.callrecorder.storage.RecordingStore
 import java.io.File
+import kotlin.concurrent.thread
 
 /**
  * سرویس ضبط — Foreground Service با نوع «microphone».
@@ -31,7 +33,9 @@ import java.io.File
  *    پس‌زمینه فقط وقتی مجاز است که اپ در «حالت مجاز» باشد؛ در این پروژه
  *    مجوز SYSTEM_ALERT_WINDOW (نمایش روی برنامه‌ها) یکی از موارد معاف
  *    از محدودیت شروع از پس‌زمینه است و ما دقیقاً از همین مسیر رسمی
- *    استفاده می‌کنیم.
+ *    استفاده می‌کنیم. (در اندروید ۱۵ این معافیت محدودتر شده — اگر سرویس
+ *    شروع نشود، اپ کرش نمی‌کند و بی‌صدا خارج می‌شود؛ کاربر در وضعیت
+ *    صفحه‌ی اصلی می‌بیند که ضبطی انجام نشده.)
  *  • اگر سیستم دسترسی میکروفون را موقتاً مسدود کند (isClientSilenced)،
  *    فایل بی‌صدا دور ریخته می‌شود تا فایل خالی ذخیره نکنیم.
  *
@@ -48,6 +52,7 @@ class RecordingService : Service() {
     private var isTestRecording = false
     private var directMode = false
     private var recording = false
+    private var micCallback: AudioManager.AudioRecordingCallback? = null
 
     private val testStopRunnable = Runnable { stopRecording(discard = false) }
 
@@ -57,6 +62,8 @@ class RecordingService : Service() {
         prefs = Prefs(this)
         audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
         createChannel()
+        // فایل‌های نیمه‌کاره‌ی دفعه‌ی قبل (مثلاً بعد از kill شدن اپ) پاک می‌شوند.
+        cleanupStalePendingFiles()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -79,6 +86,7 @@ class RecordingService : Service() {
 
     override fun onDestroy() {
         handler.removeCallbacksAndMessages(null)
+        unregisterMicMonitoring()
         stopRecording(discard = true)
         super.onDestroy()
     }
@@ -88,14 +96,26 @@ class RecordingService : Service() {
     // ---------- foreground ----------
 
     private fun startAsForeground() {
-        ServiceCompat.startForeground(
-            this,
-            NOTIF_ID,
-            buildNotification(),
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R)
-                ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
-            else 0
-        )
+        try {
+            ServiceCompat.startForeground(
+                this,
+                NOTIF_ID,
+                buildNotification(),
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R)
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
+                else 0
+            )
+        } catch (e: Exception) {
+            // در اندروید ۱۴+ اگر سیستم شروع سرویس میکروفون از پس‌زمینه را
+            // مجاز نداند، SecurityException می‌دهد. به‌جای کرش، پیام روشن
+            // به کاربر می‌دهیم و بی‌صدا خارج می‌شویم.
+            Toast.makeText(
+                this,
+                getString(R.string.err_fgs_denied),
+                Toast.LENGTH_LONG
+            ).show()
+            stopSelf()
+        }
     }
 
     private fun buildNotification(): Notification {
@@ -140,12 +160,13 @@ class RecordingService : Service() {
         if (recording) return
         if (!hasMicPermission()) { stopSelf(); return }
 
-        val dir = File(cacheDir, "pending").apply { mkdirs() }
+        val dir = pendingDir()
         val file = File(dir, "rec_${System.currentTimeMillis()}.tmp")
         tempFile = file
 
+        var r: MediaRecorder? = null
         try {
-            val r = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
+            r = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
                 MediaRecorder(this) else @Suppress("DEPRECATION") MediaRecorder()
 
             // منبع صدا: اگر آزمایش نشان داد VOICE_CALL روی این دستگاه کار
@@ -174,6 +195,7 @@ class RecordingService : Service() {
         } catch (e: Exception) {
             // میکروفون در دسترس نیست (مثلاً اپ دیگری آن را گرفته) —
             // فایل ناقص را پاک می‌کنیم و بی‌سروصدا خارج می‌شویم.
+            runCatching { r?.release() }
             recorder = null
             recording = false
             file.delete()
@@ -185,26 +207,34 @@ class RecordingService : Service() {
     private fun registerMicMonitoring() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return
         runCatching {
-            audioManager.registerAudioRecordingCallback(
-                object : AudioManager.AudioRecordingCallback() {
-                    override fun onRecordingConfigChanged(configs: MutableList<android.media.AudioRecordingConfiguration>) {
-                        if (!recording) return
-                        val silenced = configs.any { it.isClientSilenced }
-                        if (silenced) {
-                            // سیستم میکروفون را برای ما قطع کرده است؛ فایل بی‌ارزش است.
-                            stopRecording(discard = true)
-                        }
+            val callback = object : AudioManager.AudioRecordingCallback() {
+                override fun onRecordingConfigChanged(configs: MutableList<android.media.AudioRecordingConfiguration>) {
+                    // این کال‌بک فقط روی API 29+ ثبت می‌شود؛ گارد داخل بدنه
+                    // برای شفافیت و اطمینان لینت است.
+                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return
+                    if (!recording) return
+                    val silenced = configs.any { it.isClientSilenced }
+                    if (silenced) {
+                        // سیستم میکروفون را برای ما قطع کرده است؛ فایل بی‌ارزش است.
+                        stopRecording(discard = true)
                     }
-                },
-                handler
-            )
+                }
+            }
+            micCallback = callback
+            audioManager.registerAudioRecordingCallback(callback, handler)
         }
+    }
+
+    private fun unregisterMicMonitoring() {
+        runCatching { micCallback?.let { audioManager.unregisterAudioRecordingCallback(it) } }
+        micCallback = null
     }
 
     private fun stopRecording(discard: Boolean) {
         if (!recording) { stopSelf(); return }
         recording = false
         handler.removeCallbacks(testStopRunnable)
+        unregisterMicMonitoring()
 
         val file = tempFile
         tempFile = null
@@ -219,12 +249,45 @@ class RecordingService : Service() {
         if (file != null && file.exists() && file.length() > 0 && !discard) {
             val encrypted = prefs.encryptionEnabled
             val name = RecordingStore.newDisplayName(isTestRecording, encrypted)
-            RecordingStore.save(this, file, name, encrypted)
+            // نوشتن در MediaStore و رمزنگاری AES می‌تواند صدها میلی‌ثانیه
+            // طول بکشد؛ روی ترد پس‌زمینه انجام می‌شود تا ترد اصلی بلاک نشود.
+            thread(name = "save-recording") {
+                val saved = RecordingStore.save(this@RecordingService, file, name, encrypted)
+                if (saved == null) {
+                    // ذخیره ناموفق بود (مثلاً فضای پر است) — کاربر باید بداند.
+                    handler.post {
+                        Toast.makeText(
+                            this@RecordingService,
+                            getString(R.string.err_no_storage),
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                }
+                file.delete()
+            }
+        } else {
+            file?.delete()
         }
-        file?.delete()
 
         ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
         stopSelf()
+    }
+
+    // ---------- پاکسازی فایل‌های نیمه‌کاره ----------
+
+    private fun pendingDir(): File = File(cacheDir, "pending").apply { mkdirs() }
+
+    /**
+     * اگر اپ حین ضبط کشته شود، فایل .tmp در cacheDir/pending باقی می‌ماند.
+     * این فایل‌ها نه در MediaStore هستند و نه قابل پخش؛ در شروع سرویس پاک
+     * می‌شوند. خود فایل در حال ضبط فعلی حذف نمی‌شود (recording=true).
+     */
+    private fun cleanupStalePendingFiles() {
+        if (recording) return
+        val dir = pendingDir()
+        dir.listFiles()?.forEach { stale ->
+            if (stale.isFile) runCatching { stale.delete() }
+        }
     }
 
     companion object {

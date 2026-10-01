@@ -4,18 +4,29 @@ import android.content.ContentUris
 import android.content.ContentValues
 import android.content.Context
 import android.net.Uri
+import android.os.Build
+import android.os.Environment
 import android.provider.MediaStore
+import androidx.annotation.RequiresApi
 import java.io.File
+import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
 /**
- * ذخیره‌سازی کاملاً محلی از طریق MediaStore (حتی بدون هیچ مجوز ذخیره‌سازی).
+ * ذخیره‌سازی کاملاً محلی — بدون هیچ مجوز ذخیره‌سازی.
  *
- * محل نهایی: <حافظه داخلی>/Music/CallRecordings
- * این پوشه در همه‌ی فایل‌منیجرها دیده می‌شود و کاربر می‌تواند فایل‌ها را
- * مستقیم کپی/جابه‌جا/حذف کند.
+ * اندروید ۱۰ به بعد (API 29+): از طریق MediaStore در پوشه‌ی عمومی
+ *   <حافظه داخلی>/Music/CallRecordings
+ * ذخیره می‌شود؛ این پوشه در همه‌ی فایل‌منیجرها دیده می‌شود.
+ *
+ * اندروید ۸ تا ۹ (API 26-28): MediaStore مدرن (RELATIVE_PATH/IS_PENDING)
+ * وجود ندارد و نوشتن در پوشه‌ی عمومی بدون مجوز WRITE_EXTERNAL_STORAGE
+ * ممکن نیست — مجوزی که عمداً در این اپ وجود ندارد. بنابراین فایل‌ها در
+ * پوشه‌ی اختصاصی اپ ذخیره می‌شوند:
+ *   Android/data/ir.personal.callrecorder/files/Music/CallRecordings
+ * رفتار پخش/حذف از داخل اپ یکسان است.
  */
 object RecordingStore {
 
@@ -37,10 +48,26 @@ object RecordingStore {
     }
 
     /**
-     * فایل موقت را در MediaStore ذخیره می‌کند؛ اگر encrypted=true باشد
-     * هنگام نوشتن رمزنگاری می‌شود.
+     * فایل موقت را ذخیره می‌کند؛ اگر encrypted=true باشد هنگام نوشتن
+     * رمزنگاری می‌شود. در صورت هر خطا (مثلاً پر بودن فضا) null برمی‌گردد
+     * و فایل موقت را دست‌نخورده می‌گذارد تا فراخواننده پاکش کند.
      */
     fun save(context: Context, tempFile: File, displayName: String, encrypted: Boolean): Uri? {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            saveViaMediaStore(context, tempFile, displayName, encrypted)
+        } else {
+            saveToAppDir(context, tempFile, displayName, encrypted)
+        }
+    }
+
+    /** اندروید ۱۰ به بعد: ذخیره در Music/CallRecordings از طریق MediaStore. */
+    @RequiresApi(Build.VERSION_CODES.Q)
+    private fun saveViaMediaStore(
+        context: Context,
+        tempFile: File,
+        displayName: String,
+        encrypted: Boolean,
+    ): Uri? {
         val resolver = context.contentResolver
         val values = ContentValues().apply {
             put(MediaStore.Audio.Media.DISPLAY_NAME, displayName)
@@ -67,8 +94,46 @@ object RecordingStore {
         }
     }
 
+    /** اندروید ۸ تا ۹: ذخیره در پوشه‌ی اختصاصی اپ (بدون نیاز به مجوز). */
+    private fun saveToAppDir(
+        context: Context,
+        tempFile: File,
+        displayName: String,
+        encrypted: Boolean,
+    ): Uri? {
+        val dir = legacyRecordingsDir(context) ?: return null
+        val target = File(dir, displayName)
+        return try {
+            FileOutputStream(target).use { out ->
+                if (encrypted) {
+                    tempFile.inputStream().use { input -> Crypto.encryptToStream(input, out) }
+                } else {
+                    tempFile.inputStream().use { input -> input.copyTo(out, 8192) }
+                }
+            }
+            Uri.fromFile(target)
+        } catch (e: Exception) {
+            runCatching { target.delete() }
+            null
+        }
+    }
+
+    fun legacyRecordingsDir(context: Context): File? {
+        val base = context.getExternalFilesDir(Environment.DIRECTORY_MUSIC) ?: return null
+        return File(base, "CallRecordings").apply { mkdirs() }
+    }
+
     /** فهرست فایل‌های ضبط‌شده‌ی این اپ (جدیدترین اول). */
     fun list(context: Context): List<Recording> {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            listViaMediaStore(context)
+        } else {
+            listFromAppDir(context)
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.Q)
+    private fun listViaMediaStore(context: Context): List<Recording> {
         val resolver = context.contentResolver
         val collection = MediaStore.Audio.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
         val projection = arrayOf(
@@ -104,9 +169,29 @@ object RecordingStore {
         return result
     }
 
+    private fun listFromAppDir(context: Context): List<Recording> {
+        val dir = legacyRecordingsDir(context) ?: return emptyList()
+        return dir.listFiles()
+            ?.filter { it.isFile }
+            ?.sortedByDescending { it.lastModified() }
+            ?.map { f ->
+                Recording(
+                    uri = Uri.fromFile(f),
+                    name = f.name,
+                    sizeBytes = f.length(),
+                    dateAddedSec = f.lastModified() / 1000,
+                    encrypted = f.name.endsWith(".enc"),
+                )
+            } ?: emptyList()
+    }
+
     fun delete(context: Context, uri: Uri): Boolean {
         return try {
-            context.contentResolver.delete(uri, null, null) > 0
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && uri.scheme != "file") {
+                context.contentResolver.delete(uri, null, null) > 0
+            } else {
+                File(uri.path ?: return false).delete()
+            }
         } catch (e: Exception) {
             // اگر سیستم تأیید کاربر خواست، کاربر از پنجره‌ی سیستم اقدام می‌کند.
             false

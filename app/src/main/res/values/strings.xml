@@ -17,7 +17,6 @@
     <string name="status_ready">آماده — هنوز تنظیم نشده</string>
     <string name="status_ok">همه‌چیز تنظیم است؛ تماس‌ها به‌صورت خودکار ضبط می‌شوند</string>
     <string name="status_partial">تنظیمات ناقص است — موارد زیر را کامل کنید</string>
-    <string name="status_recording_now">در حال ضبط…</string>
 
     <string name="card_status_title">وضعیت</string>
     <string name="card_settings_title">تنظیمات</string>
@@ -43,8 +42,6 @@
     <string name="probe_question">آیا هنگام مکالمه، صدای طرف مقابل از بلندگو شنیده می‌شود؟</string>
     <string name="probe_yes">بله، از بلندگو پخش می‌شود</string>
     <string name="probe_no">خیر، فقط از گوشی شنیده می‌شود</string>
-    <string name="probe_result_direct_ok">نتایج آزمایش: ضبط مستقیم VOICE_CALL ممکن است — از حالت مستقیم استفاده شد. ✅</string>
-    <string name="probe_result_direct_no">نتایج آزمایش: ضبط مستقیم مسدود است (مطابق انتظار در اندروید ۹+). حالت جایگزین (اسپیکر + میکروفون) فعال شد. 🎙</string>
 
     <!-- ذخیره‌سازی -->
     <string name="storage_summary">محل ذخیره‌سازی: Music/CallRecordings (قابل مشاهده در همه‌ی فایل‌منیجرها)</string>
@@ -52,12 +49,9 @@
     <string name="rec_delete">حذف</string>
 
     <!-- خطاها -->
-    <string name="err_mic_permission">مجوز میکروفون داده نشده است.</string>
-    <string name="err_mic_busy">میکروفون در دسترس نیست (شاید برنامه‌ی دیگری آن را نگه داشته).</string>
-    <string name="err_no_storage">ذخیره‌سازی در دسترس نیست.</string>
+    <string name="err_no_storage">ذخیره‌سازی در دسترس نیست یا پر شده است؛ فایل ضبط‌شده نگه داشته نشد.</string>
     <string name="err_fgs_denied">اجازه‌ی شروع سرویس ضبط داده نشد. یک‌بار اپ را از لیست اخیر ببندید و دوباره باز کنید؛ در تنظیمات باتری MIUI هم آن را «بدون محدودیت» کنید.</string>
     <string name="toast_test_started">ضبط آزمایشی شروع شد؛ ۱۰ ثانیه صحبت کنید…</string>
-    <string name="toast_test_done">ضبط آزمایشی تمام شد.</string>
     <string name="toast_enc_on">رمزنگاری فعال شد — فایل‌های جدید با AES-256 ذخیره می‌شوند.</string>
     <string name="toast_enc_off">رمزنگاری غیرفعال شد — فایل‌های جدید با فرمت m4a ذخیره می‌شوند. فایل‌های رمزنگاری‌شده‌ی قبلی همچنان با کلید فعلی قابل پخش‌اند.</string>
 </resources>
